@@ -3,7 +3,6 @@ const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const wide = matchMedia("(min-width: 901px)");
 const slotVar = c => `var(--s${c.model.slot})`;
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
 
 /* ---------- State, kept in the URL hash ---------- */
 
@@ -76,15 +75,16 @@ function weights(a, b, k) {
 }
 
 // One short line on why the winning pan is heavier.
+// Points and dollars, "about" when a number was read from a chart.
 function reason(a, b, win) {
   const W = win === "next" ? b : a, L = win === "next" ? a : b;
   const d = W.I - L.I, eq = sameCost(a, b), cheap = !eq && W.C < L.C;
-  const more = n => `${n} more point${n === 1 ? "" : "s"}`;
-  if (d > 0 && cheap) return `${cap(more(d))} and ${cheaperText(a, b)}.`;
-  if (d > 0 && eq) return `${cap(more(d))}, same cost.`;
-  if (d > 0) return `${cap(more(d))} ${d === 1 ? "is" : "are"} worth paying ${moreText(a, b)}.`;
-  if (d === 0) return cheap ? `Same score, ${cheaperText(a, b)}.` : "Same score, same cost.";
-  return `${cap(cheaperText(a, b))} is worth more than ${points(-d)}.`;
+  const ab = a.approx || b.approx ? "about " : "";
+  const pts = ab + points(Math.abs(d)), usd = ab + money(Math.abs(W.C - L.C));
+  if (d > 0 && eq) return `You gain ${pts} at the same cost.`;
+  if (d > 0) return cheap ? `You gain ${pts} and save ${usd} per task.` : `You gain ${pts} for ${usd} more per task.`;
+  if (d === 0) return cheap ? `Same score, you save ${usd} per task.` : "Same score, same cost.";
+  return `You save ${usd} per task for ${pts} less.`;
 }
 
 // Runs every frame: tags follow the weights, names sit under the pans.

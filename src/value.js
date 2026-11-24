@@ -83,8 +83,3 @@ function cheaperText(a, b) {
   const r = ratio(a, b);
   return r >= 2 ? `${times(r)} cheaper` : `${Math.round((1 - 1 / r) * 100)}% cheaper`;
 }
-// The pricier one, against the other: "74% more" / "2.9× more".
-function moreText(a, b) {
-  const r = ratio(a, b);
-  return r >= 2 ? `${times(r)} more` : `${Math.round((r - 1) * 100)}% more`;
-}
