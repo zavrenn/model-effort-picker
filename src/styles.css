@@ -91,56 +91,42 @@ h1 { margin: 0; font-size: clamp(28px, 3.4vw, 40px); line-height: 1.05; font-wei
 .seg input:checked + label { background: var(--lime); color: var(--ink); box-shadow: inset 0 0 0 2px var(--ink); }
 .seg input:focus-visible + label { outline: 3px solid var(--purple); outline-offset: 1px; }
 
-/* ---------- Scale + ranking row ---------- */
+/* ---------- Verdict + bars, ranking ---------- */
 
-.board-row { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 24px; align-items: start; }
+.board-row { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 24px; align-items: start; }
 
 .stage {
-  position: relative; height: clamp(500px, 70vh, 680px); overflow: hidden;
-  display: flex; flex-direction: column;
+  padding: 28px 40px 40px;
   border: var(--line); border-radius: 24px; box-shadow: var(--pop);
   background: radial-gradient(120% 90% at 50% 35%, #fff 0%, #f4f1fd 55%, var(--lav) 100%);
 }
 
-.verdict { flex: none; padding: 22px 28px 0; text-align: center; }
+.verdict { text-align: center; }
 #v-head { margin: 0; font-size: clamp(26px, 3vw, 38px); line-height: 1.1; font-weight: 900; letter-spacing: -0.02em; }
 #v-head .yes, #v-head .no { padding: 0 8px; border-radius: 10px; box-shadow: inset 0 0 0 2px var(--ink); }
 #v-head .yes { background: var(--lime); }
 #v-head .no { background: #d5cbf6; }
-#v-sub { margin: 6px 0 0; font-size: 15px; color: var(--ink-2); }
+#v-sub { max-width: 640px; margin: 8px auto 0; font-size: 15px; line-height: 1.5; color: var(--ink-2); }
 
-.scene { position: relative; flex: 1; min-height: 0; }
-.scene svg.scale { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.bars { display: grid; gap: 22px; margin-top: 30px; }
+.m-head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 4px; font-size: 16px; font-weight: 800; }
+.m-val { font-variant-numeric: tabular-nums; }
+.score { --c: var(--lime); --pale: #e8f0d0; }
+.cost { --c: var(--purple); --pale: var(--lav); }
+.track { position: relative; height: 30px; border: var(--line); border-radius: 999px; background: var(--surface); }
+.clip { position: absolute; inset: 0; border-radius: 999px; overflow: hidden; }
+.base, .delta { position: absolute; top: 0; bottom: 0; left: 0; }
+.base { background: var(--pale); }
+.delta { background: var(--c); }
+.delta.down { background: repeating-linear-gradient(135deg, var(--c) 0 4px, transparent 4px 8px); }
+/* A name ends at its value; when it is wider than that, it starts at the left edge instead. */
+.lab { height: 18px; padding: 0 2px; font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.lab span { display: block; text-align: right; white-space: nowrap; }
+.lab-now { margin-bottom: 10px; }
+.lab-next { margin-top: 10px; }
+.mark { position: absolute; top: -8px; bottom: -8px; width: 2px; margin-left: -1px; background: var(--ink); }
 
-.tags { position: absolute; inset: 0; pointer-events: none; }
-.tags > * { position: absolute; left: 0; top: 0; white-space: nowrap; opacity: 0; }
-
-.wt {
-  display: grid; justify-items: center; padding: 4px 9px 5px;
-  border: var(--line); border-radius: 9px; line-height: 1.15;
-}
-.wt-score { background: var(--lime); }
-.wt-money { background: #d5cbf6; }
-.wt b { font-size: 12px; font-weight: 800; }
-.wt span { font-size: 14px; font-weight: 900; font-variant-numeric: tabular-nums; }
-
-.pl { display: grid; justify-items: center; gap: 2px; transition: opacity 0.25s ease; }
-.tags.ready > .pl.on { opacity: 1; }
-.pl strong { display: flex; align-items: center; gap: 7px; font-size: 18px; font-weight: 900; }
-.pl .meta { font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
-.pl.win strong span { background: linear-gradient(transparent 60%, var(--lime) 60%); padding: 0 2px; }
-.cdot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 1.5px var(--ink); }
-
-.wires {
-  position: absolute; inset: 0; width: 100%; height: 100%;
-  pointer-events: none; overflow: visible; z-index: 2;
-}
-.wires > * { opacity: 0; transition: opacity 0.25s ease; }
-.wires > .on { opacity: 1; }
-.link { fill: none; stroke: var(--purple); stroke-width: 2; }
-.link-dot { fill: var(--purple); }
-
-/* ---------- Ranking (rank, ol and li stay unpositioned: main.js measures from .board-row) ---------- */
+/* ---------- Ranking ---------- */
 
 .rank {
   padding: 16px 14px 14px; background: var(--surface);
@@ -194,16 +180,10 @@ li.gap { height: 0; margin: 2px 12px; border-top: 2px dotted var(--lav); }
 .foot { margin-top: 22px; font-size: 12.5px; color: var(--muted); }
 .foot a { color: var(--ink-2); font-weight: 700; }
 
-/* ---------- Scale shapes ---------- */
-
-.scale .o { stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
-.scale .str { fill: none; stroke: var(--ink); stroke-width: 1.5; }
-
 /* ---------- Small screens ---------- */
 
 @media (max-width: 900px) {
   .board-row { grid-template-columns: 1fr; }
-  .wires { display: none; }
 }
 
 @media (max-width: 640px) {
@@ -215,15 +195,10 @@ li.gap { height: 0; margin: 2px 12px; border-top: 2px dotted var(--lav); }
   .prio legend { float: none; }
   .seg { display: flex; width: 100%; }
   .seg label { flex: 1; text-align: center; padding: 7px 4px; font-size: 12.5px; }
-  .stage { height: 460px; }
-  .verdict { padding: 16px 14px 0; }
+  .stage { padding: 18px 16px 24px; }
   #v-head { font-size: 24px; }
   #v-sub { font-size: 14px; }
-  .pl strong { font-size: 14px; gap: 5px; }
-  .pl .meta { font-size: 11px; }
-  .wt { padding: 3px 7px 4px; }
-  .wt b { font-size: 10.5px; }
-  .wt span { font-size: 12px; }
+  .m-head { font-size: 14px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

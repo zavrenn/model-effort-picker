@@ -1,8 +1,6 @@
 const $ = id => document.getElementById(id);
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const wide = matchMedia("(min-width: 901px)");
 const slotVar = c => `var(--s${c.model.slot})`;
-const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 /* ---------- State, kept in the URL hash ---------- */
 
@@ -32,106 +30,56 @@ prio.innerHTML = stops.map((s, i) =>
   `<label for="prio-${i}">${esc(s.word)}</label>`).join("");
 prio.addEventListener("change", e => { state.smarts = e.target.value; update(); });
 
-/* ---------- The scale ---------- */
+/* ---------- The bars ---------- */
 
-const stage = $("stage"), sceneEl = $("scene"), tagsEl = $("tags"), boardRow = $("board-row"), rankEl = document.querySelector(".rank");
-const E = {
-  head: $("v-head"), sub: $("v-sub"),
-  wt: {
-    now: { score: $("wt-now-score"), money: $("wt-now-money") },
-    next: { score: $("wt-next-score"), money: $("wt-next-money") }
-  },
-  pl: { now: $("pl-now"), next: $("pl-next") },
-  link: $("link"), linkA: $("link-a"), linkB: $("link-b")
-};
-const SIZED = [...KEYS.flatMap(k => TYPES.map(t => E.wt[k][t])), E.pl.now, E.pl.next];
-const M = 8;
-let SW = 1, SH = 1, cur = null, geo = null;
+const NUM = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+const say = n => NUM[n] || String(n);
 
-const measure = () => { for (const el of SIZED) { el._w = el.offsetWidth; el._h = el.offsetHeight; } };
-const on = (el, v) => el.classList.toggle("on", !!v);
-const moveTo = (el, x, y) => {
-  el._x = Math.round(x); el._y = Math.round(y);
-  el.style.transform = `translate(${el._x}px, ${el._y}px)`;
-};
-
-// Short names for the pair: only what differs.
-function shortNames(a, b) {
-  if (a.model === b.model) return [effLabel(a.effort), effLabel(b.effort)];
-  if (a.effort === b.effort) return [a.model.short, b.model.short];
-  return [name(a), name(b)];
-}
-
-// What sits in each pan, in score points.
-// Score: the points gap, in the pan with more points.
-// Money: the cost gap (K points per doubling of cost), in the cheaper pan.
-// The beam tips by the difference, which is the value-score gap.
-function weights(a, b, k) {
-  const w = { now: { score: 0, money: 0 }, next: { score: 0, money: 0 } };
-  const dI = b.I - a.I, m = k * Math.log2(b.C / a.C);
-  if (dI) w[dI > 0 ? "next" : "now"].score = Math.abs(dI);
-  if (!sameCost(a, b)) w[m > 0 ? "now" : "next"].money = Math.abs(m);
-  return w;
-}
-
-// One short line on why the winning pan is heavier.
-// Points and dollars, "about" when a number was read from a chart.
-function reason(a, b, win) {
-  const W = win === "next" ? b : a, L = win === "next" ? a : b;
-  const d = W.I - L.I, eq = sameCost(a, b), cheap = !eq && W.C < L.C;
+// One sentence on what switching changes; the bars show the before-and-after numbers.
+function reason(a, b) {
+  const dI = b.I - a.I, n = Math.abs(dI), eq = sameCost(a, b), up = b.C > a.C, r = b.C / a.C;
   const ab = a.approx || b.approx ? "about " : "";
-  const pts = ab + points(Math.abs(d)), usd = ab + money(Math.abs(W.C - L.C));
-  if (d > 0 && eq) return `You gain ${pts} at the same cost.`;
-  if (d > 0) return cheap ? `You gain ${pts} and save ${usd} per task.` : `You gain ${pts} for ${usd} more per task.`;
-  if (d === 0) return cheap ? `Same score, you save ${usd} per task.` : "Same score, same cost.";
-  return `You save ${usd} per task for ${pts} less.`;
+  if (!dI && eq) return "Both have the same score and cost.";
+  const pts = dI ? `${dI > 0 ? "gain" : "lose"} ${ab}${n} benchmark point${n === 1 ? "" : "s"}` : "keep the same score";
+  const pct = up && r >= 2 ? `${ab ? "about" : "over"} ${say(ab ? Math.round(r) : Math.floor(r))} times the price`
+    : `${Math.round(Math.abs(r - 1) * 100)}% ${up ? "more" : "less"}`;
+  const usd = ab + money(Math.abs(b.C - a.C));
+  return `You ${pts} ${eq ? "at the same cost" : up ? `for ${usd} more per task (${pct})` : `and save ${usd} per task (${pct})`}.`;
 }
 
-// Runs every frame: tags follow the weights, names sit under the pans.
-function place(api) {
-  if (!cur || !api.ready) return;
-  tagsEl.classList.add("ready");
-  const py = Math.max(api.pan.now ? api.pan.now.y : 0, api.pan.next ? api.pan.next.y : 0) + 10;
-  for (const k of KEYS) {
-    for (const t of TYPES) {
-      const el = E.wt[k][t], p = api.w[k][t];
-      el.style.opacity = p ? p.a.toFixed(3) : "0";
-      if (p) moveTo(el, clamp(p.x - el._w / 2, M, SW - M - el._w), p.y - el._h / 2);
-    }
-    const el = E.pl[k], p = api.pan[k];
-    if (p) moveTo(el, clamp(p.x - el._w / 2, M, SW - M - el._w), Math.min(py, SH - M - el._h));
+const BARS = [
+  { id: "score", v: c => c.I, text: iText },
+  { id: "cost", v: c => c.C, text: cText }
+];
+let shownPair = "";
+
+// Both values on one zero-based scale. Pale up to the smaller one; the change itself is colored
+// (striped when it goes down). A thin mark stays at Now. Names sit above Now and below Considering,
+// ending at their value. Only a new pair moves the bars.
+function drawBars(a, b) {
+  const pair = `${a.key}|${b.key}`;
+  if (pair === shownPair) return;
+  shownPair = pair;
+  for (const m of BARS) {
+    const max = Math.max(m.v(a), m.v(b));
+    const f = 100 * m.v(a) / max, t = 100 * m.v(b) / max, lo = Math.min(f, t) + "%";
+    const base = $(`${m.id}-base`), delta = $(`${m.id}-delta`), mark = $(`${m.id}-mark`);
+    $(`${m.id}-val`).textContent = a === b ? m.text(a) : `${m.text(a)} → ${m.text(b)}`;
+    mark.style.left = f + "%";
+    mark.hidden = a === b;
+    $(`${m.id}-now`).textContent = a === b ? "" : name(a);
+    $(`${m.id}-now`).style.width = f + "%";
+    $(`${m.id}-next`).textContent = a === b ? "" : name(b);
+    $(`${m.id}-next`).style.width = t + "%";
+    base.style.width = lo;
+    delta.style.left = lo;
+    delta.style.width = Math.abs(t - f) + "%";
+    delta.classList.toggle("down", t < f);
+    if (reduced || a === b) continue;
+    const o = { duration: 1100, delay: 250, easing: "cubic-bezier(.3,.7,.2,1)", fill: "backwards" };
+    base.animate([{ width: f + "%" }, { width: lo }], o);
+    delta.animate([{ clipPath: t < f ? "inset(0 0 0 100%)" : "inset(0 100% 0 0)" }, { clipPath: "inset(0)" }], o);
   }
-  placeLink();
-}
-
-// Purple elbow from the "Considering" row in the ranking to its pan (wide screens only).
-function placeLink() {
-  const pl = E.pl.next;
-  let ok = wide.matches && !cur.same && geo && geo.row && pl._x != null;
-  if (ok) {
-    const x0 = geo.row.x - 3, y0 = geo.row.y;
-    const x1 = geo.sx + pl._x + pl._w + 3, y1 = geo.sy + pl._y + 13;
-    const gx = (geo.sr + geo.rl) / 2;
-    ok = x1 < gx - 12;
-    if (ok) {
-      const dy = y1 - y0, s = Math.sign(dy) || 1, rr = Math.min(12, Math.abs(dy) / 2);
-      E.link.setAttribute("d", Math.abs(dy) < 1 ? `M${x0} ${y0} H${x1}`
-        : `M${x0} ${y0} H${gx + rr} Q${gx} ${y0} ${gx} ${y0 + s * rr} V${y1 - s * rr} Q${gx} ${y1} ${gx - rr} ${y1} H${x1}`);
-      E.linkA.setAttribute("cx", x0); E.linkA.setAttribute("cy", y0);
-      E.linkB.setAttribute("cx", x1); E.linkB.setAttribute("cy", y1);
-    }
-  }
-  for (const el of [E.link, E.linkA, E.linkB]) on(el, ok);
-}
-
-function measureGeo() {
-  const li = liByKey.get(state.next);
-  geo = {
-    sx: stage.offsetLeft + stage.clientLeft + sceneEl.offsetLeft,
-    sy: stage.offsetTop + stage.clientTop + sceneEl.offsetTop,
-    sr: stage.offsetLeft + stage.offsetWidth, rl: rankEl.offsetLeft,
-    row: li && li.isConnected ? { x: li.offsetLeft, y: li.offsetTop + li.offsetHeight / 2 } : null
-  };
 }
 
 /* ---------- Ranking ---------- */
@@ -139,7 +87,7 @@ function measureGeo() {
 const list = $("rank-list"), more = $("more"), liByKey = new Map();
 let expanded = false;
 
-more.addEventListener("click", () => { expanded = !expanded; renderRank(); measureGeo(); });
+more.addEventListener("click", () => { expanded = !expanded; renderRank(); });
 list.addEventListener("click", e => {
   const btn = e.target.closest("button.row");
   if (!btn || btn.getAttribute("aria-disabled") === "true") return;
@@ -216,11 +164,9 @@ function renderRank() {
 /* ---------- Update ---------- */
 
 function update() {
-  const st = stopByKey[state.smarts];
-  applyWeight(st.k);
+  applyWeight(stopByKey[state.smarts].k);
   const a = byKey[state.now], b = byKey[state.next], same = a === b;
   const win = same ? null : b.raw > a.raw ? "next" : "now";
-  cur = { a, b, same, win };
 
   selNow.value = state.now;
   selNext.value = state.next;
@@ -229,40 +175,26 @@ function update() {
   const radio = prio.querySelector(`input[value="${state.smarts}"]`);
   if (radio) radio.checked = true;
 
-  const [na, nb] = shortNames(a, b);
-  const act = { now: `Stay on ${na}`, next: `Switch to ${nb}` };
-  let head, sub;
+  const head = $("v-head");
+  let sub;
   if (same) {
-    head = "Same choice.";
+    head.textContent = "Same choice.";
     sub = "Pick another to compare.";
-    E.head.textContent = head;
   } else {
-    const word = win === "next" ? "Yes." : "No.";
-    head = `${word} ${act[win]}.`;
-    sub = reason(a, b, win);
-    E.head.innerHTML = `<span class="${win === "next" ? "yes" : "no"}">${word}</span> ${esc(act[win])}.`;
+    const yes = win === "next", [w, l] = yes ? [b, a] : [a, b];
+    head.innerHTML = `<span class="${yes ? "yes" : "no"}">${yes ? "Yes." : "No."}</span> ` +
+      esc(`${yes ? "Choose" : "Keep"} ${name(w)} over ${name(l)}.`);
+    sub = reason(a, b);
   }
-  E.sub.textContent = sub;
+  $("v-sub").textContent = sub;
+  $("rank-title").textContent = `All models · ${stopByKey[state.smarts].word}`;
 
-  const gap = Math.abs(b.I - a.I), cheaper = sameCost(a, b) ? "" : cheaperText(a, b);
-  for (const k of KEYS) {
-    const c = k === "now" ? a : b;
-    E.wt[k].score.innerHTML = `<b>★ Higher score</b><span>+${points(gap)}</span>`;
-    E.wt[k].money.innerHTML = `<b>$ Saves money</b><span>${cheaper}</span>`;
-    E.pl[k].innerHTML = `<strong><i class="cdot" style="--c:${slotVar(c)}"></i><span>${esc(act[k])}</span></strong>` +
-      `<span class="meta">${iText(c)} points · ${c.approx ? "≈" : ""}${money(c.C)} / task</span>`;
-    E.pl[k].classList.toggle("win", win === k);
-    on(E.pl[k], !same);
-  }
-  measure();
-
-  scale.set({ same, w: same ? {} : weights(a, b, st.k) });
+  drawBars(a, b);
   renderRank();
-  measureGeo();
   writeHash();
 
-  const sentence = `${head} ${sub}`;
-  sceneEl.setAttribute("aria-label", `Balance scale. ${sentence} ` +
+  const sentence = `${head.textContent} ${sub}`;
+  $("bars").setAttribute("aria-label", `${sentence} ` +
     `${fullName(a)}: ${a.I} points, ${money(a.C)} per task. ${fullName(b)}: ${b.I} points, ${money(b.C)} per task.`);
   $("live").textContent = sentence;
 }
@@ -271,13 +203,5 @@ function update() {
 
 readHash();
 $("updated").textContent = D.updated;
-SW = sceneEl.clientWidth; SH = sceneEl.clientHeight;
-const scale = createScale(sceneEl, { reduced, onFrame: place });
-const ro = new ResizeObserver(() => {
-  SW = sceneEl.clientWidth; SH = sceneEl.clientHeight;
-  measure(); measureGeo();
-});
-ro.observe(boardRow);
-ro.observe(sceneEl);
 addEventListener("hashchange", () => { readHash(); update(); });
 update();

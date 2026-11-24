@@ -74,12 +74,6 @@ const esc = s => String(s).replace(/[&<>"']/g, ch =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
 const money = v => "$" + v.toFixed(2);
 const iText = c => (c.approx ? "≈" : "") + c.I;
-const points = n => `${n} point${n === 1 ? "" : "s"}`;
-const times = r => (r >= 10 ? Math.round(r) : r.toFixed(1)) + "×";
+const cText = c => (c.approx ? "≈" : "") + money(c.C);
 const ratio = (a, b) => Math.max(a.C, b.C) / Math.min(a.C, b.C);
 const sameCost = (a, b) => ratio(a, b) < 1.005;
-// The cheaper one, against the other: "43% cheaper" / "2.9× cheaper".
-function cheaperText(a, b) {
-  const r = ratio(a, b);
-  return r >= 2 ? `${times(r)} cheaper` : `${Math.round((1 - 1 / r) * 100)}% cheaper`;
-}

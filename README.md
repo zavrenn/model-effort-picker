@@ -2,7 +2,7 @@
 
 A one-page tool that answers a simple question: should you switch AI models (or effort levels)?
 
-Pick the model you use **now** and the one you're **considering**, then say what matters more to you, from *Cheapest* to *Smartest*. A balance scale tips toward the better choice and shows why: points gained, or money saved.
+Pick the model you use **now** and the one you're **considering**, then say what matters more to you, from *Cheapest* to *Smartest*. You get a verdict, and two bars show how the test score and the API cost per task change.
 
 ## Run it
 
@@ -33,8 +33,7 @@ All the numbers live in [`src/data.js`](src/data.js). Edit that file and reload;
 | `index.html` | Page layout |
 | `src/data.js` | Models, effort levels, scores and costs |
 | `src/value.js` | Value score and the priority choices |
-| `src/scene.js` | The balance scale (SVG) |
-| `src/main.js` | Wires the pickers, scale and ranking together |
+| `src/main.js` | Wires the pickers, verdict, bars and ranking together |
 | `src/styles.css` | Styles |
 
 ## Data source
