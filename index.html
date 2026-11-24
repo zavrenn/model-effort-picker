@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Worth the switch?</title>
+  <link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+  <main class="page">
+    <header class="top">
+      <div class="intro">
+        <h1>Worth the switch?</h1>
+        <p class="lede">Pick what you use now and what you're considering.</p>
+      </div>
+
+      <div class="picks">
+        <label class="pick pick-now">
+          <span class="eyebrow">Now</span>
+          <span class="sel"><span class="mdot" id="dot-now"></span><select id="now"></select></span>
+        </label>
+        <button class="swap" id="swap" type="button" title="Swap" aria-label="Swap now and considering">⇄</button>
+        <label class="pick pick-next">
+          <span class="eyebrow">Considering</span>
+          <span class="sel"><span class="mdot" id="dot-next"></span><select id="next"></select></span>
+        </label>
+      </div>
+    </header>
+
+    <fieldset class="prio">
+      <legend>What matters more to you?</legend>
+      <div class="seg" id="prio"></div>
+    </fieldset>
+
+    <section class="board-row" id="board-row">
+      <div class="stage" id="stage">
+        <div class="verdict">
+          <h2 id="v-head"></h2>
+          <p id="v-sub"></p>
+        </div>
+        <div class="scene" id="scene" role="img" aria-label="">
+          <div class="tags" id="tags" aria-hidden="true">
+            <span class="wt wt-score" id="wt-now-score"></span>
+            <span class="wt wt-money" id="wt-now-money"></span>
+            <span class="wt wt-score" id="wt-next-score"></span>
+            <span class="wt wt-money" id="wt-next-money"></span>
+            <div class="pl" id="pl-now"></div>
+            <div class="pl" id="pl-next"></div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="rank" aria-labelledby="rank-title">
+        <div class="rank-head">
+          <h2 id="rank-title">Your ranking</h2>
+          <span>Value / 100</span>
+        </div>
+        <ol id="rank-list"></ol>
+        <button class="more" id="more" type="button" aria-expanded="false"></button>
+      </aside>
+
+      <svg class="wires" id="wires" aria-hidden="true">
+        <path id="link" class="link"></path>
+        <circle id="link-a" class="link-dot" r="4"></circle>
+        <circle id="link-b" class="link-dot" r="4"></circle>
+      </svg>
+    </section>
+
+    <p class="sr-only" id="live" aria-live="polite"></p>
+
+    <footer class="foot">
+      Benchmark data: <a href="https://artificialanalysis.ai/" target="_blank" rel="noopener">Artificial Analysis</a>
+      · API cost per task · Updated <span id="updated"></span> · ≈ read from their chart
+    </footer>
+
+    <noscript><p>This page needs JavaScript to work.</p></noscript>
+  </main>
+
+  <script src="src/data.js"></script>
+  <script src="src/value.js"></script>
+  <script src="src/scene.js"></script>
+  <script src="src/main.js"></script>
+</body>
+</html>
