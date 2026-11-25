@@ -2,7 +2,7 @@
 
 A one-page tool that answers a simple question: should you switch AI models (or effort levels)?
 
-Pick the model you use **now** and the one you're **considering**, then say what matters more to you, from *Cheapest* to *Smartest*. You get a verdict, and two bars show how the test score and the API cost per task change.
+Pick the model you use **now** and the one you're **considering**, then say what matters more to you, from *Cheapest* to *Smartest*. You get a verdict, and two bars show how the test score and the API cost per benchmark task change.
 
 ## Run it
 

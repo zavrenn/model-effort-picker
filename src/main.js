@@ -35,16 +35,16 @@ prio.addEventListener("change", e => { state.smarts = e.target.value; update(); 
 const NUM = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
 const say = n => NUM[n] || String(n);
 
-// One sentence on what switching changes; the bars show the before-and-after numbers.
+// One sentence on what switching from Now to Considering changes; it ignores the priority.
 function reason(a, b) {
   const dI = b.I - a.I, n = Math.abs(dI), eq = sameCost(a, b), up = b.C > a.C, r = b.C / a.C;
   const ab = a.approx || b.approx ? "about " : "";
-  if (!dI && eq) return "Both have the same score and cost.";
-  const pts = dI ? `${dI > 0 ? "gain" : "lose"} ${ab}${n} benchmark point${n === 1 ? "" : "s"}` : "keep the same score";
+  const pts = dI ? `${dI > 0 ? "add" : "lose"} ${ab}${n} benchmark point${n === 1 ? "" : "s"}` : "keep the same score";
   const pct = up && r >= 2 ? `${ab ? "about" : "over"} ${say(ab ? Math.round(r) : Math.floor(r))} times the price`
     : `${Math.round(Math.abs(r - 1) * 100)}% ${up ? "more" : "less"}`;
-  const usd = ab + money(Math.abs(b.C - a.C));
-  return `You ${pts} ${eq ? "at the same cost" : up ? `for ${usd} more per task (${pct})` : `and save ${usd} per task (${pct})`}.`;
+  const cost = eq ? "cost the same per benchmark task"
+    : `cost ${ab}${money(Math.abs(b.C - a.C))} ${up ? "more" : "less"} per benchmark task (${pct})`;
+  return `Switching would ${pts} and ${cost}.`;
 }
 
 const BARS = [
@@ -196,7 +196,7 @@ function update() {
 
   const sentence = `${head.textContent} ${sub}`;
   $("bars").setAttribute("aria-label", `${sentence} ` +
-    `${fullName(a)}: ${a.I} points, ${money(a.C)} per task. ${fullName(b)}: ${b.I} points, ${money(b.C)} per task.`);
+    `${fullName(a)}: ${a.I} points, ${money(a.C)} per benchmark task. ${fullName(b)}: ${b.I} points, ${money(b.C)} per benchmark task.`);
   $("live").textContent = sentence;
 }
 
