@@ -120,7 +120,8 @@ function rowFor(c) {
 }
 
 function renderRank() {
-  const sorted = [...combos].sort((p, q) => q.value - p.value || q.I - p.I || p.C - q.C);
+  // Order by the unrounded score the verdict uses; the rounded value is only for display.
+  const sorted = [...combos].sort((p, q) => q.raw - p.raw);
   sorted.forEach((c, i) => { c.rank = i + 1; });
   const keep = new Set(expanded ? sorted : sorted.slice(0, 5));
   keep.add(byKey[state.now]).add(byKey[state.next]);
