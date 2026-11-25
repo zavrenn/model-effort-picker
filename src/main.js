@@ -120,8 +120,8 @@ function rowFor(c) {
 }
 
 function renderRank() {
-  // Order by the unrounded score the verdict uses; the rounded value is only for display.
-  const sorted = [...combos].sort((p, q) => q.raw - p.raw);
+  // Order the way the verdict decides; the rounded value is only for display.
+  const sorted = [...combos].sort((p, q) => better(q, p));
   sorted.forEach((c, i) => { c.rank = i + 1; });
   const keep = new Set(expanded ? sorted : sorted.slice(0, 5));
   keep.add(byKey[state.now]).add(byKey[state.next]);
@@ -165,9 +165,9 @@ function renderRank() {
 /* ---------- Update ---------- */
 
 function update() {
-  applyWeight(stopByKey[state.smarts].k);
+  applyWeight(stopByKey[state.smarts]);
   const a = byKey[state.now], b = byKey[state.next], same = a === b;
-  const win = same ? null : b.raw > a.raw ? "next" : "now";
+  const win = same ? null : better(b, a) > 0 ? "next" : "now";
 
   selNow.value = state.now;
   selNext.value = state.next;

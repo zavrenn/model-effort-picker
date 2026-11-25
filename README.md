@@ -20,6 +20,8 @@ value = intelligence − K × log2(cost)
 - **cost**: the API cost in USD per index task.
 - **K**: how many points one doubling of cost is worth. It is set by "What matters more to you?".
 
+*Cheapest* ranks by cost alone and *Smartest* by score alone; the other measure only breaks ties.
+
 Scores are scaled to 0–100 for the ranking.
 
 ## Update the data

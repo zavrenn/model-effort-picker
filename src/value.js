@@ -14,9 +14,15 @@ D.models.forEach(m => EFFORTS.forEach(e => {
 }));
 const byKey = Object.fromEntries(combos.map(c => [c.key, c]));
 
-// K = intelligence points one doubling of cost is worth.
-function applyWeight(k) {
-  combos.forEach(c => { c.raw = c.I - k * Math.log2(c.C); });
+// K = intelligence points one doubling of cost is worth. Cheapest goes by cost alone and
+// Smartest by score alone; the other measure only breaks ties.
+let tie = () => 0;
+function applyWeight(stop) {
+  const w = stop.word;
+  combos.forEach(c => {
+    c.raw = w === "Cheapest" ? -Math.log2(c.C) : w === "Smartest" ? c.I : c.I - stop.k * Math.log2(c.C);
+  });
+  tie = w === "Cheapest" ? (p, q) => p.I - q.I : w === "Smartest" ? (p, q) => q.C - p.C : () => 0;
   const raws = combos.map(c => c.raw);
   const lo = Math.min(...raws), hi = Math.max(...raws);
   combos.forEach(c => { c.value = Math.round(100 * (c.raw - lo) / (hi - lo || 1)); });
@@ -64,6 +70,8 @@ const stops = (() => {
   return all;
 })();
 const stopByKey = Object.fromEntries(stops.map(s => [s.c.key, s]));
+// > 0 when p is the better pick under the current weight.
+const better = (p, q) => p.raw - q.raw || tie(p, q);
 const defaultStop = stops[Math.floor((stops.length - 1) / 2)];
 
 /* ---------- Words and numbers ---------- */
